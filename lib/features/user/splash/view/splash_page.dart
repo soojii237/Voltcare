@@ -63,7 +63,9 @@ class _SplashPageState extends State<SplashPage>
 
       if (!userDoc.exists) {
         // User document doesn't exist
-        await _handleInvalidAccount("Account not found. Please register first.");
+        await _handleInvalidAccount(
+          "Account not found. Please register first.",
+        );
         return;
       }
 
@@ -74,14 +76,18 @@ class _SplashPageState extends State<SplashPage>
       // Check user status
       if (status == -1) {
         // Account not found or invalid
-        await _handleInvalidAccount("Account not found. Please register first.");
+        await _handleInvalidAccount(
+          "Account not found. Please register first.",
+        );
       } else if (status == 0) {
         // Account blocked
-        await _handleInvalidAccount("Your account has been blocked. Please contact support.");
+        await _handleInvalidAccount(
+          "Your account has been blocked. Please contact support.",
+        );
       } else if (status == 1) {
         // Account active - navigate based on role
         if (!mounted) return;
-        
+
         if (role == 'admin') {
           Screen.openAsNewPage(context, const AdminHomeScreen());
         } else {
@@ -89,7 +95,9 @@ class _SplashPageState extends State<SplashPage>
         }
       } else {
         // Unknown status
-        await _handleInvalidAccount("Account status unknown. Please contact support.");
+        await _handleInvalidAccount(
+          "Account status unknown. Please contact support.",
+        );
       }
     } catch (e) {
       // Error occurred, navigate to login
@@ -102,9 +110,9 @@ class _SplashPageState extends State<SplashPage>
     // Sign out and clear SharedPreferences
     await FirebaseAuth.instance.signOut();
     await SharedPref.remove(key: 'uid');
-    
+
     if (!mounted) return;
-    
+
     // Show message and navigate to login
     _showSnackBar(message);
     _navigateToLogin();
@@ -112,7 +120,7 @@ class _SplashPageState extends State<SplashPage>
 
   void _navigateToLogin() {
     if (!mounted) return;
-    
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -122,7 +130,7 @@ class _SplashPageState extends State<SplashPage>
 
   void _showSnackBar(String message) {
     if (!mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -141,14 +149,18 @@ class _SplashPageState extends State<SplashPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue,
+      backgroundColor: Colors.amberAccent,
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.flash_on_rounded, color: Colors.white, size: 80.sp),
+              Image.asset(
+                'assets/images/splashicon.png',
+                width: 200,
+                height: 200,
+              ),
               SizedBox(height: 10.h),
               Text(
                 "VOLTCARE",
