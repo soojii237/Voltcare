@@ -16,6 +16,8 @@ class UserModel {
   String? phone;
   int? status;
   String? uid;
+  String? memberType; // e.g., 'parent' or 'staff' for linked accounts
+  String? homeId;     // linked home/office id for member accounts
 
   UserModel({
     this.address,
@@ -27,6 +29,8 @@ class UserModel {
     this.phone,
     this.status,
     this.uid,
+    this.memberType,
+    this.homeId,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -68,6 +72,8 @@ class UserModel {
       phone: json["phone"],
       status: json["status"],
       uid: json["uid"],
+      memberType: json["memberType"],
+      homeId: json["homeId"],
     );
   }
 
@@ -82,6 +88,8 @@ class UserModel {
         "phone": phone,
         "status": status,
         "uid": uid,
+        "memberType": memberType,
+        "homeId": homeId,
       };
 
   /// Convert DateTime → "dd-mm-yyyy"

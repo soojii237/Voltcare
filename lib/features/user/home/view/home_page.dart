@@ -209,18 +209,48 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: _buildHomePage(),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.blue.shade600,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddNewHomeScreen()),
-          );
-        },
-        icon: const Icon(Icons.add, color: AppColors.white),
-        label: const AppText(text: "Add Home", color: AppColors.white),
-      ),
+      floatingActionButton:
+          Appvariables.loggedInUser?.memberType == null
+              ? FloatingActionButton.extended(
+                  backgroundColor: Colors.blue.shade600,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const AddNewHomeScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.add, color: AppColors.white),
+                  label: const AppText(
+                      text: "Add Home", color: AppColors.white),
+                )
+              : null,
     );
+  }
+
+  Stream<QuerySnapshot> _userHomesStream() {
+    final user = Appvariables.loggedInUser;
+    if (user == null) {
+      return FirebaseFirestore.instance
+          .collection('Homes')
+          .where('status', isEqualTo: 1)
+          .where('userId', isEqualTo: null)
+          .snapshots();
+    }
+
+    if (user.memberType != null && user.homeId != null && user.homeId!.isNotEmpty) {
+      return FirebaseFirestore.instance
+          .collection('Homes')
+          .where('status', isEqualTo: 1)
+          .where('homeId', isEqualTo: user.homeId)
+          .snapshots();
+    }
+
+    return FirebaseFirestore.instance
+        .collection('Homes')
+        .where('status', isEqualTo: 1)
+        .where('userId', isEqualTo: user.uid)
+        .snapshots();
   }
 
   // ============ HOME PAGE ============
@@ -242,11 +272,7 @@ class _HomePageState extends State<HomePage> {
 
           // Homes Section Header
           StreamBuilder(
-            stream: FirebaseFirestore.instance
-                .collection('Homes')
-                .where('status', isEqualTo: 1)
-                .where('userId', isEqualTo: Appvariables.loggedInUser?.uid)
-                .snapshots(),
+            stream: _userHomesStream(),
             builder: (context, asyncSnapshot) {
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -546,11 +572,7 @@ class _HomePageState extends State<HomePage> {
       children: [
         Expanded(
           child: StreamBuilder(
-            stream: FirebaseFirestore.instance
-                .collection('Homes')
-                .where('status', isEqualTo: 1)
-                .where('userId', isEqualTo: Appvariables.loggedInUser?.uid)
-                .snapshots(),
+            stream: _userHomesStream(),
             builder: (context, asyncSnapshot) {
               return _buildStatCard(
                 icon: Icons.home_work,
@@ -565,11 +587,7 @@ class _HomePageState extends State<HomePage> {
         SizedBox(width: 12.w),
         Expanded(
           child: StreamBuilder(
-            stream: FirebaseFirestore.instance
-                .collection('Homes')
-                .where('status', isEqualTo: 1)
-                .where('userId', isEqualTo: Appvariables.loggedInUser?.uid)
-                .snapshots(),
+            stream: _userHomesStream(),
             builder: (context, homeSnapshot) {
               if (!homeSnapshot.hasData) {
                 return _buildStatCard(
@@ -638,11 +656,7 @@ class _HomePageState extends State<HomePage> {
         SizedBox(width: 12.w),
         Expanded(
   child: StreamBuilder(
-    stream: FirebaseFirestore.instance
-        .collection('Homes')
-        .where('status', isEqualTo: 1)
-        .where('userId', isEqualTo: Appvariables.loggedInUser?.uid)
-        .snapshots(),
+    stream: _userHomesStream(),
     builder: (context, asyncSnapshot) {
       // Reload usage when homes data changes
       if (asyncSnapshot.hasData) {

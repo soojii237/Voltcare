@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:voltcare/service/cloudinary_service.dart';
 import 'package:voltcare/utils/dynamic/appvariables.dart';
@@ -23,6 +25,8 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
   final _chargePerWattController = TextEditingController();
+  final _memberEmailController = TextEditingController();
+  final _memberPasswordController = TextEditingController();
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
@@ -115,7 +119,10 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: Color(0xFF6C63FF)),
+              leading: const Icon(
+                Icons.photo_library,
+                color: Color(0xFF6C63FF),
+              ),
               title: const Text('Gallery'),
               onTap: () async {
                 var data = await pickImage(context: context, isCamera: false);
@@ -261,7 +268,9 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
                         label,
                         style: TextStyle(
                           fontSize: 10.sp,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w400,
                           color: isSelected
                               ? const Color(0xFF6C63FF)
                               : Colors.grey[600],
@@ -287,6 +296,73 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
     );
   }
 
+  bool _isOfficeType() {
+    final officeIcons = <IconData>[
+      Icons.business,
+      Icons.business_center,
+      Icons.store,
+      Icons.storefront,
+      Icons.warehouse,
+      Icons.factory,
+      Icons.home_work,
+      Icons.hotel,
+      Icons.meeting_room,
+    ];
+    return officeIcons.contains(_selectedIcon);
+  }
+
+  Future<String?> _createLinkedAccount({
+    required String email,
+    required String password,
+    required String name,
+    required String role,
+    required String memberType,
+    required String homeId,
+  }) async {
+    final defaultApp = Firebase.app();
+    final secondaryApp = await Firebase.initializeApp(
+      name: 'secondary-${DateTime.now().millisecondsSinceEpoch}',
+      options: defaultApp.options,
+    );
+    try {
+      final secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
+      final userCredential = await secondaryAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final uid = userCredential.user?.uid;
+      if (uid == null) {
+        return null;
+      }
+
+      await FirebaseFirestore.instance.collection('Users').doc(uid).set({
+        'uid': uid,
+        'name': name,
+        'namefilter': [
+          for (int i = 1; i <= name.length; i++)
+            name.substring(0, i).toLowerCase(),
+        ],
+        'email': email,
+        'role': role,
+        'memberType': memberType,
+        'homeId': homeId,
+        'address': '',
+        'phone': '',
+        'password': password,
+        'status': 1,
+        'createdAt': DateTime.now(),
+      });
+
+      return uid;
+    } on FirebaseAuthException {
+      return null;
+    } catch (_) {
+      return null;
+    } finally {
+      await secondaryApp.delete();
+    }
+  }
+
   Future<void> _handleSubmit() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedImage == null) {
@@ -304,38 +380,72 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
       });
 
       try {
-        var imageUrl = await CloudneryUploader().uploadFile(XFile(_selectedImage!.path));
-        
+        var imageUrl = await CloudneryUploader().uploadFile(
+          XFile(_selectedImage!.path),
+        );
+
         // Convert Color to hex string for Firestore
-        String colorHex = '0x${_selectedColor.value.toRadixString(16).padLeft(8, '0').toUpperCase()}';
-        
+        String colorHex =
+            '0x${_selectedColor.value.toRadixString(16).padLeft(8, '0').toUpperCase()}';
+
         // Convert IconData to codePoint for Firestore
         int iconCodePoint = _selectedIcon.codePoint;
+        bool isOffice = _isOfficeType();
+
+        final homeDocRef = _firestore.collection('Homes').doc();
 
         // Prepare home data
         final Map<String, dynamic> homeData = {
+          'homeId': homeDocRef.id,
           'name': _nameController.text.trim(),
           'address': _addressController.text.trim(),
           'imageUrl': imageUrl,
           'backgroundColor': colorHex,
           'iconCodePoint': iconCodePoint,
-          'chargePerWatt': double.tryParse(_chargePerWattController.text.trim()) ?? 0.0,
+          'chargePerWatt':
+              double.tryParse(_chargePerWattController.text.trim()) ?? 0.0,
           'createdAt': FieldValue.serverTimestamp(),
           'status': 1,
           'userId': Appvariables.loggedInUser?.uid,
+          'type': isOffice ? 'office' : 'home',
           'dailyTotals': {},
           'monthlyTotals': {},
         };
 
         // Save to Cloud Firestore
-        await _firestore.collection('Homes').add(homeData).then((value) {
-          value.update({'homeId': value.id});
+        await homeDocRef.set(homeData);
+
+        String baseName = _nameController.text.trim();
+        String email = _memberEmailController.text.trim();
+        String password = _memberPasswordController.text.trim();
+        String displayName = isOffice ? '$baseName Staff' : '$baseName Parent';
+        String memberType = isOffice ? 'staff' : 'parent';
+
+        String? linkedUid = await _createLinkedAccount(
+          email: email,
+          password: password,
+          name: displayName,
+          role: 'user',
+          memberType: memberType,
+          homeId: homeDocRef.id,
+        );
+
+        if (linkedUid == null) {
+          throw Exception('Failed to create linked account');
+        }
+
+        await homeDocRef.update({
+          isOffice ? 'staffUid' : 'parentUid': linkedUid,
+          isOffice ? 'staffEmail' : 'parentEmail': email,
+          isOffice ? 'staffPassword' : 'parentPassword': password,
         });
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Home "${_nameController.text}" added successfully!'),
+              content: Text(
+                '${isOffice ? 'Office' : 'Home'} "${_nameController.text}" added successfully!',
+              ),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
             ),
@@ -345,6 +455,8 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
           _nameController.clear();
           _addressController.clear();
           _chargePerWattController.clear();
+          _memberEmailController.clear();
+          _memberPasswordController.clear();
           setState(() {
             _selectedImage = null;
             _selectedColor = const Color(0xFF6C63FF);
@@ -379,11 +491,14 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
     _nameController.dispose();
     _addressController.dispose();
     _chargePerWattController.dispose();
+    _memberEmailController.dispose();
+    _memberPasswordController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    bool isOffice = _isOfficeType();
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -449,14 +564,21 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withOpacity(0.2),
+                                            color: Colors.black.withOpacity(
+                                              0.2,
+                                            ),
                                             blurRadius: 8,
                                           ),
                                         ],
                                       ),
                                       child: IconButton(
-                                        icon: const Icon(Icons.edit, color: Color(0xFF6C63FF)),
-                                        onPressed: _isLoading ? null : _showImageSourceDialog,
+                                        icon: const Icon(
+                                          Icons.edit,
+                                          color: Color(0xFF6C63FF),
+                                        ),
+                                        onPressed: _isLoading
+                                            ? null
+                                            : _showImageSourceDialog,
                                       ),
                                     ),
                                   ),
@@ -468,7 +590,12 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
                                   Container(
                                     padding: EdgeInsets.all(16.w),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF6C63FF).withOpacity(0.1),
+                                      color: const Color.fromARGB(
+                                        255,
+                                        247,
+                                        224,
+                                        10,
+                                      ).withOpacity(0.1),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
@@ -570,7 +697,9 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
                                     width: 50.w,
                                     height: 50.h,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF6C63FF).withOpacity(0.1),
+                                      color: const Color(
+                                        0xFF6C63FF,
+                                      ).withOpacity(0.1),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
@@ -630,7 +759,12 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
                       enabled: !_isLoading,
                       maxLines: 3,
                       prefixIcon: Padding(
-                        padding: EdgeInsets.only(bottom: 50.h, left: 12.w, right: 12.w, top: 12.h),
+                        padding: EdgeInsets.only(
+                          bottom: 50.h,
+                          left: 12.w,
+                          right: 12.w,
+                          top: 12.h,
+                        ),
                         child: Icon(
                           Icons.location_on,
                           color: const Color(0xFF6C63FF),
@@ -653,7 +787,9 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
                       hintText: 'e.g., 0.15',
                       showLabelOutside: true,
                       enabled: !_isLoading,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       prefixIcon: Padding(
                         padding: EdgeInsets.all(12.w),
                         child: Icon(
@@ -672,6 +808,62 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
                         }
                         if (number < 0) {
                           return 'Charge cannot be negative';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 24.h),
+
+                    AppTextField(
+                      controller: _memberEmailController,
+                      label: '${isOffice ? 'Staff' : 'Parent'} Email',
+                      hintText:
+                          'Ex: ${isOffice ? 'staff' : 'parent'}@example.com',
+                      showLabelOutside: true,
+                      enabled: !_isLoading,
+                      keyboardType: TextInputType.emailAddress,
+                      prefixIcon: Padding(
+                        padding: EdgeInsets.all(12.w),
+                        child: Icon(
+                          Icons.email,
+                          color: const Color(0xFF6C63FF),
+                          size: 20.sp,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter email';
+                        }
+                        final email = value.trim();
+                        if (!email.contains('@') || !email.contains('.')) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 24.h),
+
+                    AppTextField(
+                      controller: _memberPasswordController,
+                      label: '${isOffice ? 'Staff' : 'Parent'} Password',
+                      hintText: '********',
+                      showLabelOutside: true,
+                      enabled: !_isLoading,
+                      isObscure: true,
+                      prefixIcon: Padding(
+                        padding: EdgeInsets.all(12.w),
+                        child: Icon(
+                          Icons.lock,
+                          color: const Color(0xFF6C63FF),
+                          size: 20.sp,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter password';
+                        }
+                        if (value.trim().length < 6) {
+                          return 'Password must be at least 6 characters';
                         }
                         return null;
                       },
@@ -728,9 +920,7 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const CircularProgressIndicator(
-                        color: Color(0xFF6C63FF),
-                      ),
+                      const CircularProgressIndicator(color: Color(0xFF6C63FF)),
                       SizedBox(height: 16.h),
                       Text(
                         'Adding Home...',
