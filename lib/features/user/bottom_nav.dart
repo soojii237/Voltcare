@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voltcare/utils/constants/app_colors.dart';
 
 import 'home/view/home_page.dart';
 import 'profile/view/profile_page.dart';
@@ -32,7 +33,7 @@ class _BottomNavPageState extends State<BottomNavPage> {
             currentIndex = value;
           });
         },
-        selectedItemColor: Colors.blue,
+        selectedItemColor: AppColors.iconYellow,
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
 

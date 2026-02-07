@@ -214,7 +214,7 @@ class _ManageUsersPageState extends State<ManageUsersPage> {
                             if (status == -1)
                               // Undelete button for deleted students
                               IconButton(
-                                icon: const Icon(Icons.restore, color: Colors.blue),
+                                icon: const Icon(Icons.restore, color: AppColors.iconYellow),
                                 onPressed: () {
                                   undeleteStudent(student["uid"]);
                                 },

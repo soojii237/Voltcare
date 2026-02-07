@@ -26,7 +26,7 @@ class _HomePageState extends State<HomePage> {
     {
       "name": "My Home",
       "icon": Icons.home,
-      "color": Colors.blue,
+      "color": AppColors.iconYellow,
       "devices": [
         {
           "name": "Living Room Bulb",
@@ -740,12 +740,12 @@ class _HomePageState extends State<HomePage> {
           Container(
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
+              color: AppColors.iconYellow.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Icon(
               Icons.calendar_today,
-              color: Colors.blue.shade600,
+              color: AppColors.iconYellow,
               size: 24.sp,
             ),
           ),

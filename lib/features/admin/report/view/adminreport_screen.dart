@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:voltcare/utils/constants/app_colors.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -435,7 +436,7 @@ class _AdminReportPageState extends State<AdminReportPage>
                     "Users",
                     totalUsers.toString(),
                     Icons.people_rounded,
-                    Colors.blue,
+                    AppColors.iconYellow,
                   ),
                 ),
                 SizedBox(width: 12.w),
@@ -661,10 +662,10 @@ class _AdminReportPageState extends State<AdminReportPage>
         leading: Container(
           padding: EdgeInsets.all(12.w),
           decoration: BoxDecoration(
-            color: Colors.blue.shade50,
+            color: AppColors.iconYellow.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12.r),
           ),
-          child: Icon(Icons.home_rounded, color: Colors.blue, size: 24.sp),
+          child: Icon(Icons.home_rounded, color: AppColors.iconYellow, size: 24.sp),
         ),
         title: Text(
           home['homeName'],

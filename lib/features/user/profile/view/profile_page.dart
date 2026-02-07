@@ -1,5 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:voltcare/utils/constants/app_colors.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:voltcare/features/user/login/view/login_page.dart';
@@ -164,7 +166,7 @@ class _ProfilePageState extends State<ProfilePage> {
       margin: EdgeInsets.only(bottom: 16.w),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       child: ListTile(
-        leading: Icon(icon, color: Colors.blue, size: 30.sp),
+        leading: Icon(icon, color: AppColors.iconYellow, size: 30.sp),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(value),
       ),

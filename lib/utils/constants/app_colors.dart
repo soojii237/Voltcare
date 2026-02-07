@@ -17,4 +17,5 @@ class AppColors {
   static const Color error = Colors.red;
   static const Color transparent = Colors.transparent;
   static const Color black = Colors.black;
+  static const Color iconYellow = Color(0xFFF7E00A);
 }
