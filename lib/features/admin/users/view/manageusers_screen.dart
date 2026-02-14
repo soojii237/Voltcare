@@ -40,17 +40,20 @@ class _ManageUsersPageState extends State<ManageUsersPage> {
   // ---------- BLOCK/UNBLOCK STUDENT METHOD ----------
   Future<void> toggleBlockStudent(String uid, int currentStatus) async {
     try {
-      int newStatus = currentStatus == 1 ? 0 : 1; // Toggle between active (1) and blocked (0)
-      
-      await FirebaseFirestore.instance
-          .collection("Users")
-          .doc(uid)
-          .update({"status": newStatus});
+      int newStatus = currentStatus == 1
+          ? 0
+          : 1; // Toggle between active (1) and blocked (0)
+
+      await FirebaseFirestore.instance.collection("Users").doc(uid).update({
+        "status": newStatus,
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(newStatus == 0 ? "Student blocked" : "Student unblocked"),
+            content: Text(
+              newStatus == 0 ? "Student blocked" : "Student unblocked",
+            ),
             backgroundColor: newStatus == 0 ? Colors.orange : Colors.green,
             duration: const Duration(seconds: 2),
           ),
@@ -59,10 +62,7 @@ class _ManageUsersPageState extends State<ManageUsersPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: $e"),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
         );
       }
     }
@@ -71,10 +71,9 @@ class _ManageUsersPageState extends State<ManageUsersPage> {
   // ---------- DELETE STUDENT METHOD ----------
   Future<void> deleteStudent(String uid) async {
     try {
-      await FirebaseFirestore.instance
-          .collection("Users")
-          .doc(uid)
-          .update({"status": -1});
+      await FirebaseFirestore.instance.collection("Users").doc(uid).update({
+        "status": -1,
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -88,10 +87,7 @@ class _ManageUsersPageState extends State<ManageUsersPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: $e"),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
         );
       }
     }
@@ -100,10 +96,9 @@ class _ManageUsersPageState extends State<ManageUsersPage> {
   // ---------- UNDELETE STUDENT METHOD ----------
   Future<void> undeleteStudent(String uid) async {
     try {
-      await FirebaseFirestore.instance
-          .collection("Users")
-          .doc(uid)
-          .update({"status": 1}); // Restore to active status
+      await FirebaseFirestore.instance.collection("Users").doc(uid).update({
+        "status": 1,
+      }); // Restore to active status
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -117,10 +112,7 @@ class _ManageUsersPageState extends State<ManageUsersPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: $e"),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
         );
       }
     }
@@ -131,7 +123,7 @@ class _ManageUsersPageState extends State<ManageUsersPage> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-          title: const Text(
+        title: const Text(
           'Manage Users',
           style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
         ),
@@ -145,7 +137,6 @@ class _ManageUsersPageState extends State<ManageUsersPage> {
 
           // ---------- FILTER BUTTONS ----------
           SingleChildScrollView(
-
             scrollDirection: Axis.horizontal,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -154,7 +145,6 @@ class _ManageUsersPageState extends State<ManageUsersPage> {
                 filterButton("active", "Active"),
                 filterButton("blocked", "Blocked"),
                 filterButton("deleted", "Deleted"),
-                
               ],
             ),
           ),
@@ -201,8 +191,12 @@ class _ManageUsersPageState extends State<ManageUsersPage> {
                             if (status != -1)
                               IconButton(
                                 icon: Icon(
-                                  status == 1 ? Icons.block : Icons.check_circle,
-                                  color: status == 1 ? Colors.orange : Colors.green,
+                                  status == 1
+                                      ? Icons.block
+                                      : Icons.check_circle,
+                                  color: status == 1
+                                      ? Colors.orange
+                                      : Colors.green,
                                 ),
                                 onPressed: () {
                                   toggleBlockStudent(student["uid"], status);
@@ -214,7 +208,10 @@ class _ManageUsersPageState extends State<ManageUsersPage> {
                             if (status == -1)
                               // Undelete button for deleted students
                               IconButton(
-                                icon: const Icon(Icons.restore, color: AppColors.iconYellow),
+                                icon: const Icon(
+                                  Icons.restore,
+                                  color: AppColors.iconBlue,
+                                ),
                                 onPressed: () {
                                   undeleteStudent(student["uid"]);
                                 },
@@ -223,7 +220,10 @@ class _ManageUsersPageState extends State<ManageUsersPage> {
                             else
                               // Delete button for active/blocked students
                               IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
                                 onPressed: () {
                                   deleteStudent(student["uid"]);
                                 },

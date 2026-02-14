@@ -26,7 +26,7 @@ class _HomePageState extends State<HomePage> {
     {
       "name": "My Home",
       "icon": Icons.home,
-      "color": AppColors.iconYellow,
+      "color": AppColors.iconBlue,
       "devices": [
         {
           "name": "Living Room Bulb",
@@ -172,10 +172,9 @@ class _HomePageState extends State<HomePage> {
     var result = await calculator.calculateWeeklyUsage();
     if (mounted) {
       setState(() {
-      weeklyUsage = "${result['weeklyKWh']?.toStringAsFixed(1) ?? '0.0'} kWh";
-    });
+        weeklyUsage = "${result['weeklyKWh']?.toStringAsFixed(1) ?? '0.0'} kWh";
+      });
     }
-    
   }
 
   @override
@@ -194,37 +193,24 @@ class _HomePageState extends State<HomePage> {
             fontSize: 24.sp,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.notifications_outlined,
-              color: Colors.grey.shade700,
-            ),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(Icons.settings_outlined, color: Colors.grey.shade700),
-            onPressed: () {},
-          ),
-        ],
+        actions: [],
       ),
       body: _buildHomePage(),
-      floatingActionButton:
-          Appvariables.loggedInUser?.memberType == null
-              ? FloatingActionButton.extended(
-                  backgroundColor: Colors.blue.shade600,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const AddNewHomeScreen()),
-                    );
-                  },
-                  icon: const Icon(Icons.add, color: AppColors.white),
-                  label: const AppText(
-                      text: "Add Home", color: AppColors.white),
-                )
-              : null,
+      floatingActionButton: Appvariables.loggedInUser?.memberType == null
+          ? FloatingActionButton.extended(
+              backgroundColor: Colors.blue.shade600,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddNewHomeScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.add, color: AppColors.white),
+              label: const AppText(text: "Add Home", color: AppColors.white),
+            )
+          : null,
     );
   }
 
@@ -238,7 +224,9 @@ class _HomePageState extends State<HomePage> {
           .snapshots();
     }
 
-    if (user.memberType != null && user.homeId != null && user.homeId!.isNotEmpty) {
+    if (user.memberType != null &&
+        user.homeId != null &&
+        user.homeId!.isNotEmpty) {
       return FirebaseFirestore.instance
           .collection('Homes')
           .where('status', isEqualTo: 1)
@@ -324,116 +312,182 @@ class _HomePageState extends State<HomePage> {
 
   // ============ HOME CARD (simplified - no devices grid) ============
   Widget _buildHomeCard(QueryDocumentSnapshot<Object?> homeData) {
-  final home = homeData;
+    final home = homeData;
 
-  // Use IconHelper instead of dynamic IconData creation
-  final homeIcon = IconHelper.getIcon(
-    home['iconCodePoint'],
-    defaultIcon: Icons.home,
-  );
+    // Use IconHelper instead of dynamic IconData creation
+    final homeIcon = IconHelper.getIcon(
+      home['iconCodePoint'],
+      defaultIcon: Icons.home,
+    );
 
-  final homeColor = Color(int.parse(home['backgroundColor'].toString()));
+    final homeColor = Color(int.parse(home['backgroundColor'].toString()));
 
-  return Container(
-    margin: EdgeInsets.only(bottom: 16.h),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20.r),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.06),
-          blurRadius: 12.r,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: InkWell(
-      onTap: () {
-        Screen.open(
-          context,
-          HomeDevicesScreen(
-            homeId: home.id,
-            homeName: home['name'],
-            homeColor: homeColor,
-            homeIcon: homeIcon,
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12.r,
+            offset: const Offset(0, 4),
           ),
-        );
-      },
-      borderRadius: BorderRadius.circular(20.r),
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        child: Row(
-          children: [
-            // Home icon
-            Container(
-              padding: EdgeInsets.all(14.w),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    homeColor.withOpacity(0.3),
-                    homeColor.withOpacity(0.6),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16.r),
-              ),
-              child: Icon(
-                homeIcon,
-                color: homeColor,
-                size: 32.sp,
-              ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () {
+          Screen.open(
+            context,
+            HomeDevicesScreen(
+              homeId: home.id,
+              homeName: home['name'],
+              homeColor: homeColor,
+              homeIcon: homeIcon,
             ),
-
-            SizedBox(width: 16.w),
-
-            // Home details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    home['name'] ?? 'Unnamed Home',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade800,
-                    ),
-                  ),
-                  SizedBox(height: 6.h),
-                  Row(
-                    children: [
-                      StreamBuilder(
-                        stream: FirebaseFirestore.instance
-                            .collection('Homes')
-                            .doc(home.id)
-                            .collection('Equipments')
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) return Text("0 devices");
-                          final count = snapshot.data!.docs.length;
-                          return Text("$count devices");
-                        },
-                      ),
-                      SizedBox(width: 12.w),
+          );
+        },
+        borderRadius: BorderRadius.circular(20.r),
+        child: Container(
+          padding: EdgeInsets.all(16.w),
+          child: Row(
+            children: [
+              // Home icon
+              Container(
+                padding: EdgeInsets.all(14.w),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      homeColor.withOpacity(0.3),
+                      homeColor.withOpacity(0.6),
                     ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                child: Icon(homeIcon, color: homeColor, size: 32.sp),
               ),
-            ),
 
-            // Arrow icon
-            Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.grey.shade400,
-              size: 18.sp,
-            ),
-          ],
+              SizedBox(width: 16.w),
+
+              // Home details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      home['name'] ?? 'Unnamed Home',
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                    SizedBox(height: 6.h),
+                    Row(
+                      children: [
+                        StreamBuilder(
+                          stream: FirebaseFirestore.instance
+                              .collection('Homes')
+                              .doc(home.id)
+                              .collection('Equipments')
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) return Text("0 devices");
+                            final count = snapshot.data!.docs.length;
+                            return Text("$count devices");
+                          },
+                        ),
+                        SizedBox(width: 12.w),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Delete icon
+              IconButton(
+                icon: Icon(
+                  Icons.delete_outline,
+                  color: Colors.red.shade400,
+                  size: 24.sp,
+                ),
+                onPressed: () => _confirmDeleteHome(home.id, home['name']),
+              ),
+
+              SizedBox(width: 4.w),
+
+              // Arrow icon
+              Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.grey.shade400,
+                size: 18.sp,
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+  void _confirmDeleteHome(String homeId, String homeName) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Delete $homeName?"),
+          content: Text(
+            "Are you sure you want to delete this home? All devices and data associated with it will be lost.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text("Cancel", style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteHome(homeId);
+              },
+              child: Text("Delete", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteHome(String homeId) async {
+    try {
+      // 1. Delete all subcollections (Equipments) manually if needed,
+      // but client-side Firestore deletes don't automatically recurse.
+      // For a simple app, we might just delete the Home document
+      // and let the subcollections become orphaned or handle it via Cloud Functions.
+      // Here, we'll try to delete equipments first for cleanliness.
+
+      final equipments = await FirebaseFirestore.instance
+          .collection('Homes')
+          .doc(homeId)
+          .collection('Equipments')
+          .get();
+
+      for (var doc in equipments.docs) {
+        await doc.reference.delete();
+      }
+
+      // 2. Delete the Home document
+      await FirebaseFirestore.instance.collection('Homes').doc(homeId).delete();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Home deleted successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error deleting home: $e')));
+    }
+  }
 
   Future<int> getEquipmentsCount(String homeId) async {
     final snapshot = await FirebaseFirestore.instance
@@ -655,23 +709,23 @@ class _HomePageState extends State<HomePage> {
         ),
         SizedBox(width: 12.w),
         Expanded(
-  child: StreamBuilder(
-    stream: _userHomesStream(),
-    builder: (context, asyncSnapshot) {
-      // Reload usage when homes data changes
-      if (asyncSnapshot.hasData) {
-        _loadWeeklyUsage();
-      }
-      
-      return _buildStatCard(
-        icon: Icons.trending_up,
-        label: "Total Usage",
-        value: weeklyUsage,
-        color: Colors.orange,
-      );
-    },
-  ),
-),
+          child: StreamBuilder(
+            stream: _userHomesStream(),
+            builder: (context, asyncSnapshot) {
+              // Reload usage when homes data changes
+              if (asyncSnapshot.hasData) {
+                _loadWeeklyUsage();
+              }
+
+              return _buildStatCard(
+                icon: Icons.trending_up,
+                label: "Total Usage",
+                value: weeklyUsage,
+                color: Colors.orange,
+              );
+            },
+          ),
+        ),
       ],
     );
   }
@@ -740,12 +794,12 @@ class _HomePageState extends State<HomePage> {
           Container(
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
-              color: AppColors.iconYellow.withOpacity(0.1),
+              color: AppColors.iconBlue.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Icon(
               Icons.calendar_today,
-              color: AppColors.iconYellow,
+              color: AppColors.iconBlue,
               size: 24.sp,
             ),
           ),

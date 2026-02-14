@@ -64,10 +64,7 @@ class _AdminReportPageState extends State<AdminReportPage>
     setState(() => _isLoading = true);
 
     try {
-      await Future.wait([
-        _loadHomeUsageData(),
-        _loadUserUsageData(),
-      ]);
+      await Future.wait([_loadHomeUsageData(), _loadUserUsageData()]);
     } catch (e) {
       print('Error loading admin data: $e');
     } finally {
@@ -91,11 +88,14 @@ class _AdminReportPageState extends State<AdminReportPage>
         String userName = 'Unknown User';
         String userEmail = '';
         try {
-          DocumentSnapshot userDoc =
-              await _firestore.collection('Users').doc(userId).get();
+          DocumentSnapshot userDoc = await _firestore
+              .collection('Users')
+              .doc(userId)
+              .get();
           if (userDoc.exists) {
             var userData = userDoc.data() as Map<String, dynamic>;
-            userName = userData['name'] ?? userData['displayName'] ?? 'Unknown User';
+            userName =
+                userData['name'] ?? userData['displayName'] ?? 'Unknown User';
             userEmail = userData['email'] ?? '';
           }
         } catch (e) {
@@ -181,11 +181,14 @@ class _AdminReportPageState extends State<AdminReportPage>
           String userName = 'Unknown User';
           String userEmail = '';
           try {
-            DocumentSnapshot userDoc =
-                await _firestore.collection('Users').doc(userId).get();
+            DocumentSnapshot userDoc = await _firestore
+                .collection('Users')
+                .doc(userId)
+                .get();
             if (userDoc.exists) {
               var userData = userDoc.data() as Map<String, dynamic>;
-              userName = userData['name'] ?? userData['displayName'] ?? 'Unknown User';
+              userName =
+                  userData['name'] ?? userData['displayName'] ?? 'Unknown User';
               userEmail = userData['email'] ?? '';
             }
           } catch (e) {
@@ -246,7 +249,7 @@ class _AdminReportPageState extends State<AdminReportPage>
 
       List<Map<String, dynamic>> userList = userDataMap.values.toList();
       userList.sort((a, b) => b['totalKwh'].compareTo(a['totalKwh']));
-      
+
       setState(() => _userUsageData = userList);
     } catch (e) {
       print('Error loading user usage data: $e');
@@ -315,21 +318,23 @@ class _AdminReportPageState extends State<AdminReportPage>
             )
           : TabBarView(
               controller: _tabController,
-              children: [
-                _buildOverviewTab(),
-                _buildHomeTab(),
-                _buildUserTab(),
-              ],
+              children: [_buildOverviewTab(), _buildHomeTab(), _buildUserTab()],
             ),
     );
   }
 
   Widget _buildOverviewTab() {
-    double totalKWh = _homeUsageData.fold(0.0, (sum, item) => sum + item['kwh']);
+    double totalKWh = _homeUsageData.fold(
+      0.0,
+      (sum, item) => sum + item['kwh'],
+    );
     double totalCost = totalKWh * 7.50;
     int totalHomes = _homeUsageData.length;
     int totalUsers = _userUsageData.length;
-    int totalDevices = _homeUsageData.fold(0, (sum, item) => sum + (item['deviceCount'] as int));
+    int totalDevices = _homeUsageData.fold(
+      0,
+      (sum, item) => sum + (item['deviceCount'] as int),
+    );
 
     return RefreshIndicator(
       onRefresh: _loadAdminData,
@@ -436,7 +441,7 @@ class _AdminReportPageState extends State<AdminReportPage>
                     "Users",
                     totalUsers.toString(),
                     Icons.people_rounded,
-                    AppColors.iconYellow,
+                    AppColors.iconBlue,
                   ),
                 ),
                 SizedBox(width: 12.w),
@@ -494,7 +499,9 @@ class _AdminReportPageState extends State<AdminReportPage>
             if (_homeUsageData.isEmpty)
               _buildEmptyState()
             else
-              ..._homeUsageData.take(5).map((home) => _buildTopConsumerTile(home)),
+              ..._homeUsageData
+                  .take(5)
+                  .map((home) => _buildTopConsumerTile(home)),
           ],
         ),
       ),
@@ -533,7 +540,12 @@ class _AdminReportPageState extends State<AdminReportPage>
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -561,10 +573,7 @@ class _AdminReportPageState extends State<AdminReportPage>
           ),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600),
           ),
         ],
       ),
@@ -662,17 +671,18 @@ class _AdminReportPageState extends State<AdminReportPage>
         leading: Container(
           padding: EdgeInsets.all(12.w),
           decoration: BoxDecoration(
-            color: AppColors.iconYellow.withOpacity(0.1),
+            color: AppColors.iconBlue.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12.r),
           ),
-          child: Icon(Icons.home_rounded, color: AppColors.iconYellow, size: 24.sp),
+          child: Icon(
+            Icons.home_rounded,
+            color: AppColors.iconBlue,
+            size: 24.sp,
+          ),
         ),
         title: Text(
           home['homeName'],
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -719,11 +729,18 @@ class _AdminReportPageState extends State<AdminReportPage>
               children: [
                 Row(
                   children: [
-                    Icon(Icons.devices_rounded, size: 16.sp, color: Colors.grey),
+                    Icon(
+                      Icons.devices_rounded,
+                      size: 16.sp,
+                      color: Colors.grey,
+                    ),
                     SizedBox(width: 8.w),
                     Text(
                       "${home['deviceCount']} Devices",
-                      style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade700),
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: Colors.grey.shade700,
+                      ),
                     ),
                   ],
                 ),
@@ -744,10 +761,7 @@ class _AdminReportPageState extends State<AdminReportPage>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            entry.key,
-                            style: TextStyle(fontSize: 13.sp),
-                          ),
+                          Text(entry.key, style: TextStyle(fontSize: 13.sp)),
                           Text(
                             "${entry.value.toStringAsFixed(2)} kWh",
                             style: TextStyle(
@@ -790,10 +804,7 @@ class _AdminReportPageState extends State<AdminReportPage>
         ),
         title: Text(
           user['userName'],
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -911,7 +922,11 @@ class _AdminReportPageState extends State<AdminReportPage>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.analytics_outlined, size: 64.sp, color: Colors.grey.shade300),
+          Icon(
+            Icons.analytics_outlined,
+            size: 64.sp,
+            color: Colors.grey.shade300,
+          ),
           SizedBox(height: 16.h),
           Text(
             "No Data Available",

@@ -49,16 +49,16 @@ class _HomeDevicesScreenState extends State<HomeDevicesScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.add, color: widget.homeColor),
-            onPressed: (){
+            onPressed: () {
               Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddDeviceScreen(
-          homeId: widget.homeId,
-          homeColor: widget.homeColor,
-        ),
-      ),
-    );
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddDeviceScreen(
+                    homeId: widget.homeId,
+                    homeColor: widget.homeColor,
+                  ),
+                ),
+              );
             },
           ),
         ],
@@ -71,16 +71,12 @@ class _HomeDevicesScreenState extends State<HomeDevicesScreen> {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
-            );
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-              child: CircularProgressIndicator(
-                color: widget.homeColor,
-              ),
+              child: CircularProgressIndicator(color: widget.homeColor),
             );
           }
 
@@ -100,7 +96,7 @@ class _HomeDevicesScreenState extends State<HomeDevicesScreen> {
                     gradient: LinearGradient(
                       colors: [
                         widget.homeColor.withOpacity(0.15),
-                        widget.homeColor.withOpacity(0.05)
+                        widget.homeColor.withOpacity(0.05),
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -189,11 +185,11 @@ class _HomeDevicesScreenState extends State<HomeDevicesScreen> {
                           itemCount: devices.length,
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 16,
-                            crossAxisSpacing: 16,
-                            childAspectRatio: 0.74,
-                          ),
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 16,
+                                crossAxisSpacing: 16,
+                                childAspectRatio: 0.74,
+                              ),
                           itemBuilder: (context, index) {
                             return _buildDeviceCard(devices[index]);
                           },
@@ -207,170 +203,241 @@ class _HomeDevicesScreenState extends State<HomeDevicesScreen> {
     );
   }
 
- Widget _buildDeviceCard(QueryDocumentSnapshot deviceDoc) {
-  final device = deviceDoc.data() as Map<String, dynamic>;
-  final isOn = device['isOn'] ?? false;
-  final deviceName = device['name'] ?? 'Unknown Device';
-  final wattPerHour = device['wattPerHour'] ?? 0;
-  
-  // Use IconHelper instead of dynamic IconData creation
-  final deviceIcon = IconHelper.getIcon(
-    device['iconCode'],
-    defaultIcon: Icons.power,
-  );
+  Widget _buildDeviceCard(QueryDocumentSnapshot deviceDoc) {
+    final device = deviceDoc.data() as Map<String, dynamic>;
+    final isOn = device['isOn'] ?? false;
+    final deviceName = device['name'] ?? 'Unknown Device';
+    final wattPerHour = device['wattPerHour'] ?? 0;
 
-  return InkWell(
-    onTap: () {
-      // Navigate to device details if needed
-    },
-    child: Container(
-      decoration: BoxDecoration(
-        color: isOn ? Colors.blue.shade50 : Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-          color: isOn ? Colors.blue.shade300 : Colors.grey.shade200,
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10.r,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    // Use IconHelper instead of dynamic IconData creation
+    final deviceIcon = IconHelper.getIcon(
+      device['iconCode'],
+      defaultIcon: Icons.power,
+    );
+
+    return InkWell(
+      onTap: () {
+        // Navigate to device details if needed
+      },
+      child: Stack(
+        // Changed from Container to Stack to position the delete button
         children: [
           Container(
-            padding: EdgeInsets.all(14.w),
+            width: double
+                .infinity, // Ensure container takes full width of the grid cell
+            height: double.infinity, // Ensure container takes full height
             decoration: BoxDecoration(
-              color: isOn ? Colors.blue.shade100 : Colors.grey.shade100,
-              shape: BoxShape.circle,
+              color: isOn ? Colors.blue.shade50 : Colors.white,
+              borderRadius: BorderRadius.circular(20.r),
+              border: Border.all(
+                color: isOn ? Colors.blue.shade300 : Colors.grey.shade200,
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10.r,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: Icon(
-              deviceIcon,
-              size: 36.sp,
-              color: isOn ? Colors.blue.shade700 : Colors.grey.shade600,
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(14.w),
+                  decoration: BoxDecoration(
+                    color: isOn ? Colors.blue.shade100 : Colors.grey.shade100,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    deviceIcon,
+                    size: 36.sp,
+                    color: isOn ? Colors.blue.shade700 : Colors.grey.shade600,
+                  ),
+                ),
+
+                SizedBox(height: 12.h),
+
+                Text(
+                  deviceName,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+
+                SizedBox(height: 6.h),
+
+                Text(
+                  '${wattPerHour}W',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+
+                SizedBox(height: 8.h),
+
+                Transform.scale(
+                  scale: 0.85,
+                  child: Switch(
+                    value: isOn,
+                    onChanged: (value) => _toggleDevice(deviceDoc.id, value),
+                    activeColor: Colors.blue.shade600,
+                  ),
+                ),
+              ],
             ),
           ),
 
-          SizedBox(height: 12.h),
-
-          Text(
-            deviceName,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade800,
-            ),
-          ),
-
-          SizedBox(height: 6.h),
-
-          Text(
-            '${wattPerHour}W',
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: Colors.grey.shade600,
-            ),
-          ),
-
-          SizedBox(height: 8.h),
-
-          Transform.scale(
-            scale: 0.85,
-            child: Switch(
-              value: isOn,
-              onChanged: (value) => _toggleDevice(deviceDoc.id, value),
-              activeColor: Colors.blue.shade600,
+          // Delete Button Positioned at Top Right
+          Positioned(
+            top: 4.h,
+            right: 4.w,
+            child: IconButton(
+              icon: Icon(
+                Icons.delete_outline,
+                color: Colors.red.shade300,
+                size: 20.sp,
+              ),
+              onPressed: () => _confirmDeleteDevice(deviceDoc.id, deviceName),
+              padding: EdgeInsets.zero,
+              constraints:
+                  const BoxConstraints(), // Removes default padding constraints
             ),
           ),
         ],
       ),
-    ),
-  );
-}
- Future<void> _toggleDevice(String deviceId, bool newValue) async {
-  try {
-    final deviceRef = _firestore
-        .collection('Homes')
-        .doc(widget.homeId)
-        .collection('Equipments')
-        .doc(deviceId);
-
-    await deviceRef.update({
-      'isOn': newValue,
-      'lastOn': newValue ? FieldValue.serverTimestamp() : null,
-    });
-
-    // If turning on, create a usage log entry
-    if (newValue) {
-      await deviceRef.collection('usageLogs').add({
-        'startTime': FieldValue.serverTimestamp(),
-        'endTime': null,
-        'durationSeconds': null,
-        'wattsUsed': null,
-        'cost': null,
-        'date': DateTime.now().toIso8601String().split('T')[0],
-        'month': '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}',
-      });
-    } else {
-      // When turning off, update the last open usage log
-      final logsSnapshot = await deviceRef
-          .collection('usageLogs')
-          .where('endTime', isEqualTo: null)
-          .orderBy('startTime', descending: true)
-          .limit(1)
-          .get();
-
-      if (logsSnapshot.docs.isNotEmpty) {
-        final logDoc = logsSnapshot.docs.first;
-        final logData = logDoc.data();
-        final startTime = (logData['startTime'] as Timestamp).toDate();
-        final endTime = DateTime.now();
-        final durationSeconds = endTime.difference(startTime).inSeconds;
-
-        // Get device wattage
-        final deviceData = (await deviceRef.get()).data();
-        final wattPerHour = deviceData?['wattPerHour'] ?? 0;
-        final wattsUsed = (wattPerHour * durationSeconds) / 3600;
-
-        // Fetch chargePerWatt from the Homes document
-        final homeDoc = await _firestore
-            .collection('Homes')
-            .doc(widget.homeId)
-            .get();
-        
-        final homeData = homeDoc.data();
-        final chargePerWatt = (homeData?['chargePerWatt'] ?? 0.12).toDouble();
-        
-        // Calculate cost using chargePerWatt (convert watts to kWh and multiply by rate)
-        final cost = (wattsUsed / 1000) * chargePerWatt;
-
-        await logDoc.reference.update({
-          'endTime': FieldValue.serverTimestamp(),
-          'durationSeconds': durationSeconds,
-          'wattsUsed': wattsUsed,
-          'cost': cost,
-        });
-
-        // Update equipment totals
-        await deviceRef.update({
-          'totalSecondsUsed': FieldValue.increment(durationSeconds),
-          'totalWattsUsed': FieldValue.increment(wattsUsed),
-          'totalCost': FieldValue.increment(cost),
-        });
-      }
-    }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error toggling device: $e')),
     );
   }
-}
+
+  void _confirmDeleteDevice(String deviceId, String deviceName) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Delete $deviceName?"),
+          content: Text("Are you sure you want to delete this device?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text("Cancel", style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteDevice(deviceId);
+              },
+              child: Text("Delete", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteDevice(String deviceId) async {
+    try {
+      await _firestore
+          .collection('Homes')
+          .doc(widget.homeId)
+          .collection('Equipments')
+          .doc(deviceId)
+          .delete();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Device deleted successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error deleting device: $e')));
+    }
+  }
+
+  Future<void> _toggleDevice(String deviceId, bool newValue) async {
+    try {
+      final deviceRef = _firestore
+          .collection('Homes')
+          .doc(widget.homeId)
+          .collection('Equipments')
+          .doc(deviceId);
+
+      await deviceRef.update({
+        'isOn': newValue,
+        'lastOn': newValue ? FieldValue.serverTimestamp() : null,
+      });
+
+      // If turning on, create a usage log entry
+      if (newValue) {
+        await deviceRef.collection('usageLogs').add({
+          'startTime': FieldValue.serverTimestamp(),
+          'endTime': null,
+          'durationSeconds': null,
+          'wattsUsed': null,
+          'cost': null,
+          'date': DateTime.now().toIso8601String().split('T')[0],
+          'month':
+              '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}',
+        });
+      } else {
+        // When turning off, update the last open usage log
+        final logsSnapshot = await deviceRef
+            .collection('usageLogs')
+            .where('endTime', isEqualTo: null)
+            .orderBy('startTime', descending: true)
+            .limit(1)
+            .get();
+
+        if (logsSnapshot.docs.isNotEmpty) {
+          final logDoc = logsSnapshot.docs.first;
+          final logData = logDoc.data();
+          final startTime = (logData['startTime'] as Timestamp).toDate();
+          final endTime = DateTime.now();
+          final durationSeconds = endTime.difference(startTime).inSeconds;
+
+          // Get device wattage
+          final deviceData = (await deviceRef.get()).data();
+          final wattPerHour = deviceData?['wattPerHour'] ?? 0;
+          final wattsUsed = (wattPerHour * durationSeconds) / 3600;
+
+          // Fetch chargePerWatt from the Homes document
+          final homeDoc = await _firestore
+              .collection('Homes')
+              .doc(widget.homeId)
+              .get();
+
+          final homeData = homeDoc.data();
+          final chargePerWatt = (homeData?['chargePerWatt'] ?? 0.12).toDouble();
+
+          // Calculate cost using chargePerWatt (convert watts to kWh and multiply by rate)
+          final cost = (wattsUsed / 1000) * chargePerWatt;
+
+          await logDoc.reference.update({
+            'endTime': FieldValue.serverTimestamp(),
+            'durationSeconds': durationSeconds,
+            'wattsUsed': wattsUsed,
+            'cost': cost,
+          });
+
+          // Update equipment totals
+          await deviceRef.update({
+            'totalSecondsUsed': FieldValue.increment(durationSeconds),
+            'totalWattsUsed': FieldValue.increment(wattsUsed),
+            'totalCost': FieldValue.increment(cost),
+          });
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error toggling device: $e')));
+    }
+  }
 }

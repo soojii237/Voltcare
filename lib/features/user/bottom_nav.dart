@@ -15,11 +15,7 @@ class BottomNavPage extends StatefulWidget {
 class _BottomNavPageState extends State<BottomNavPage> {
   int currentIndex = 0;
 
-  final List<Widget> pages = [
-    HomePage(),
-    UsagePage(),
-    ProfilePage()
-  ];
+  final List<Widget> pages = [HomePage(), UsagePage(), ProfilePage()];
 
   @override
   Widget build(BuildContext context) {
@@ -33,24 +29,15 @@ class _BottomNavPageState extends State<BottomNavPage> {
             currentIndex = value;
           });
         },
-        selectedItemColor: AppColors.iconYellow,
+        selectedItemColor: AppColors.iconBlue,
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
 
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            label: "Usage",
-          ),
-         
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "Profile",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: "Usage"),
+
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
       ),
     );

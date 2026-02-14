@@ -166,7 +166,7 @@ class _ProfilePageState extends State<ProfilePage> {
       margin: EdgeInsets.only(bottom: 16.w),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       child: ListTile(
-        leading: Icon(icon, color: AppColors.iconYellow, size: 30.sp),
+        leading: Icon(icon, color: AppColors.iconBlue, size: 30.sp),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(value),
       ),
