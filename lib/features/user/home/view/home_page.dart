@@ -376,13 +376,60 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      home['name'] ?? 'Unnamed Home',
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade800,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            home['name'] ?? 'Unnamed Home',
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade800,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        FutureBuilder<double>(
+                          future: UsageCalculator()
+                              .calculateMonthlyUsageForHome(home.id),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              final currentUsage = snapshot.data!;
+                              final limit =
+                                  (home.data()
+                                          as Map<
+                                            String,
+                                            dynamic
+                                          >)['monthlyUsageLimit']
+                                      ?.toDouble() ??
+                                  0.0;
+
+                              if (limit > 0 && currentUsage >= limit) {
+                                return Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w,
+                                    vertical: 4.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.shade100,
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  child: Text(
+                                    "LIMIT EXCEEDED",
+                                    style: TextStyle(
+                                      color: Colors.red.shade700,
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                            return const SizedBox();
+                          },
+                        ),
+                      ],
                     ),
                     SizedBox(height: 6.h),
                     Row(

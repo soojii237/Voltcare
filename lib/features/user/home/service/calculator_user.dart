@@ -179,4 +179,45 @@ class UsageCalculator {
       return {};
     }
   }
+
+  // Calculate usage for a specific home in the current month
+  Future<double> calculateMonthlyUsageForHome(String homeId) async {
+    DateTime now = DateTime.now();
+    DateTime monthStart = DateTime(now.year, now.month, 1, 0, 0, 0);
+
+    double totalWattsUsed = 0.0;
+    int totalDurationSeconds = 0;
+
+    try {
+      QuerySnapshot equipmentSnapshot = await _firestore
+          .collection('Homes')
+          .doc(homeId)
+          .collection('Equipments')
+          .get();
+
+      for (var equipmentDoc in equipmentSnapshot.docs) {
+        QuerySnapshot usageLogsSnapshot = await _firestore
+            .collection('Homes')
+            .doc(homeId)
+            .collection('Equipments')
+            .doc(equipmentDoc.id)
+            .collection('usageLogs')
+            .where('startTime', isGreaterThanOrEqualTo: monthStart)
+            .get();
+
+        for (var logDoc in usageLogsSnapshot.docs) {
+          var data = logDoc.data() as Map<String, dynamic>;
+          totalWattsUsed += (data['wattsUsed'] ?? 0.0) as double;
+          totalDurationSeconds += (data['durationSeconds'] ?? 0) as int;
+        }
+      }
+
+      double monthlyKWh =
+          (totalWattsUsed / 1000) * (totalDurationSeconds / 3600);
+      return monthlyKWh;
+    } catch (e) {
+      print('Error calculating monthly usage for home: $e');
+      return 0.0;
+    }
+  }
 }
