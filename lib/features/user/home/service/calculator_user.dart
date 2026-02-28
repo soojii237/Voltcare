@@ -180,10 +180,10 @@ class UsageCalculator {
     }
   }
 
-  // Calculate usage for a specific home in the current month
-  Future<double> calculateMonthlyUsageForHome(String homeId) async {
+  // Calculate usage for a specific home in the current day
+  Future<double> calculateDailyUsageForHome(String homeId) async {
     DateTime now = DateTime.now();
-    DateTime monthStart = DateTime(now.year, now.month, 1, 0, 0, 0);
+    DateTime dayStart = DateTime(now.year, now.month, now.day, 0, 0, 0);
 
     double totalWattsUsed = 0.0;
     int totalDurationSeconds = 0;
@@ -202,7 +202,7 @@ class UsageCalculator {
             .collection('Equipments')
             .doc(equipmentDoc.id)
             .collection('usageLogs')
-            .where('startTime', isGreaterThanOrEqualTo: monthStart)
+            .where('startTime', isGreaterThanOrEqualTo: dayStart)
             .get();
 
         for (var logDoc in usageLogsSnapshot.docs) {
@@ -212,11 +212,11 @@ class UsageCalculator {
         }
       }
 
-      double monthlyKWh =
-          (totalWattsUsed / 1000) * (totalDurationSeconds / 3600);
-      return monthlyKWh;
+      double dailyKWh =
+          (totalWattsUsed / 1) * ((totalDurationSeconds / 30) / 3600);
+      return dailyKWh;
     } catch (e) {
-      print('Error calculating monthly usage for home: $e');
+      print('Error calculating daily usage for home: $e');
       return 0.0;
     }
   }

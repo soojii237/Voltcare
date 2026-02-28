@@ -25,7 +25,7 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
   final _chargePerWattController = TextEditingController();
-  final _monthlyUsageLimitController = TextEditingController();
+  final _dailyUsageLimitController = TextEditingController();
   final _memberEmailController = TextEditingController();
   final _memberPasswordController = TextEditingController();
   File? _selectedImage;
@@ -405,8 +405,8 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
           'iconCodePoint': iconCodePoint,
           'chargePerWatt':
               double.tryParse(_chargePerWattController.text.trim()) ?? 0.0,
-          'monthlyUsageLimit':
-              double.tryParse(_monthlyUsageLimitController.text.trim()) ?? 0.0,
+          'dailyUsageLimit':
+              double.tryParse(_dailyUsageLimitController.text.trim()) ?? 0.0,
           'createdAt': FieldValue.serverTimestamp(),
           'status': 1,
           'userId': Appvariables.loggedInUser?.uid,
@@ -458,7 +458,7 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
           _nameController.clear();
           _addressController.clear();
           _chargePerWattController.clear();
-          _monthlyUsageLimitController.clear();
+          _dailyUsageLimitController.clear();
           _memberEmailController.clear();
           _memberPasswordController.clear();
           setState(() {
@@ -495,7 +495,7 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
     _nameController.dispose();
     _addressController.dispose();
     _chargePerWattController.dispose();
-    _monthlyUsageLimitController.dispose();
+    _dailyUsageLimitController.dispose();
     _memberEmailController.dispose();
     _memberPasswordController.dispose();
     super.dispose();
@@ -819,9 +819,9 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
                     ),
                     SizedBox(height: 24.h),
                     AppTextField(
-                      controller: _monthlyUsageLimitController,
-                      label: 'Monthly Usage Limit',
-                      hintText: 'e.g., 1000',
+                      controller: _dailyUsageLimitController,
+                      label: 'Daily Usage Limit',
+                      hintText: 'e.g., 10',
                       showLabelOutside: true,
                       enabled: !_isLoading,
                       keyboardType: const TextInputType.numberWithOptions(
@@ -837,14 +837,14 @@ class _AddNewHomeScreenState extends State<AddNewHomeScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter monthly usage limit';
+                          return 'Please enter daily usage limit';
                         }
                         final number = double.tryParse(value.trim());
                         if (number == null) {
                           return 'Please enter a valid number';
                         }
                         if (number < 0) {
-                          return 'Monthly usage limit cannot be negative';
+                          return 'Daily usage limit cannot be negative';
                         }
                         return null;
                       },

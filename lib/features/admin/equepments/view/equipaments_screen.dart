@@ -82,8 +82,14 @@ class _EquipmentListingPageState extends State<EquipmentListingPage> {
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
-                  .collection('Equipments').where('status', isEqualTo: 1).
-                  where('namefilter', arrayContains: _searchQuery.toLowerCase().isEmpty ? null : _searchQuery)
+                  .collection('Equipments')
+                  .where('status', isEqualTo: 1)
+                  .where(
+                    'namefilter',
+                    arrayContains: _searchQuery.toLowerCase().isEmpty
+                        ? null
+                        : _searchQuery,
+                  )
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -96,9 +102,7 @@ class _EquipmentListingPageState extends State<EquipmentListingPage> {
                 }
 
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -123,37 +127,40 @@ class _EquipmentListingPageState extends State<EquipmentListingPage> {
                 }
 
                 // Convert documents to EquipmentsModel list
-                List<EquipmentsModel> equipments = snapshot.data!.docs
-                    .map((doc) {
-                      Map<String, dynamic> data =
-                          doc.data() as Map<String, dynamic>;
-                      return EquipmentsModel(
-                        id: doc.id,
-                        name: data['name'] ?? '',
-                        subtitle: data['subtitle'] ?? '',
-                        image: data['image'] ?? '',
-                        status: data['status'] ?? 0,
-                        namefilter: data['namefilter'].cast<String>(),
-                      );
-                    })
-                    .toList();
+                List<EquipmentsModel> equipments = snapshot.data!.docs.map((
+                  doc,
+                ) {
+                  Map<String, dynamic> data =
+                      doc.data() as Map<String, dynamic>;
+                  return EquipmentsModel(
+                    id: doc.id,
+                    name: data['name'] ?? '',
+                    subtitle: data['subtitle'] ?? '',
+                    image: data['image'] ?? '',
+                    status: data['status'] ?? 0,
+                    namefilter: data['namefilter'].cast<String>(),
+                  );
+                }).toList();
 
                 // Filter equipments based on search query
                 if (_searchQuery.isNotEmpty) {
                   equipments = equipments.where((equipment) {
-                    final nameMatch = equipment.name
-                            ?.toLowerCase()
-                            .contains(_searchQuery) ??
+                    final nameMatch =
+                        equipment.name?.toLowerCase().contains(_searchQuery) ??
                         false;
-                    final subtitleMatch = equipment.subtitle
-                            ?.toLowerCase()
-                            .contains(_searchQuery) ??
+                    final subtitleMatch =
+                        equipment.subtitle?.toLowerCase().contains(
+                          _searchQuery,
+                        ) ??
                         false;
-                    
+
                     // Also search in namefilter array if it exists
-                    final namefilterMatch = equipment.namefilter != null &&
-                        equipment.namefilter!.any((filter) =>
-                            filter.toLowerCase().contains(_searchQuery));
+                    final namefilterMatch =
+                        equipment.namefilter != null &&
+                        equipment.namefilter!.any(
+                          (filter) =>
+                              filter.toLowerCase().contains(_searchQuery),
+                        );
 
                     return nameMatch || subtitleMatch || namefilterMatch;
                   }).toList();
@@ -259,7 +266,7 @@ class EquipmentCard extends StatelessWidget {
                       child: CircularProgressIndicator(
                         value: loadingProgress.expectedTotalBytes != null
                             ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
+                                  loadingProgress.expectedTotalBytes!
                             : null,
                       ),
                     ),
@@ -307,6 +314,41 @@ class EquipmentCard extends StatelessWidget {
                     ),
                 ],
               ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Equipment'),
+                    content: const Text(
+                      'Are you sure you want to delete this equipment?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          if (equipment.id != null) {
+                            await FirebaseFirestore.instance
+                                .collection('Equipments')
+                                .doc(equipment.id)
+                                .delete();
+                          }
+                        },
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
         ),

@@ -391,8 +391,9 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         FutureBuilder<double>(
-                          future: UsageCalculator()
-                              .calculateMonthlyUsageForHome(home.id),
+                          future: UsageCalculator().calculateDailyUsageForHome(
+                            home.id,
+                          ),
                           builder: (context, snapshot) {
                             if (snapshot.hasData) {
                               final currentUsage = snapshot.data!;
@@ -401,7 +402,7 @@ class _HomePageState extends State<HomePage> {
                                           as Map<
                                             String,
                                             dynamic
-                                          >)['monthlyUsageLimit']
+                                          >)['dailyUsageLimit']
                                       ?.toDouble() ??
                                   0.0;
 
