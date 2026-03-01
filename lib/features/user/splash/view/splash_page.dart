@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:voltcare/features/user/model/user_model.dart';
 import 'package:voltcare/utils/dynamic/appvariables.dart';
 
 import '../../../../utils/helper/helper_pagenavigator.dart';
@@ -10,7 +11,6 @@ import '../../../../utils/sharedpref.dart';
 import '../../../admin/home/view/home_screen.dart';
 import '../../bottom_nav.dart';
 import '../../login/view/login_page.dart';
-import '../../model/user_model.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});

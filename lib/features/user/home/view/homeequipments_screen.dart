@@ -5,6 +5,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../utils/helper/helper_icons.dart';
 import 'adddeviceunderhome_screen.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:voltcare/service/cloudinary_service.dart';
+import '../service/calculator_user.dart';
 
 class HomeDevicesScreen extends StatefulWidget {
   final String homeId; // Pass home document ID from previous screen
@@ -104,41 +107,150 @@ class _HomeDevicesScreenState extends State<HomeDevicesScreen> {
                   ),
                   child: Column(
                     children: [
-                      Container(
-                        padding: EdgeInsets.all(20.w),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: widget.homeColor.withOpacity(0.3),
-                              blurRadius: 20.r,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          widget.homeIcon,
-                          color: widget.homeColor,
-                          size: 48.sp,
-                        ),
-                      ),
-                      SizedBox(height: 16.h),
-                      Text(
-                        "${devices.length} Devices",
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          color: Colors.grey.shade700,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        "$activeCount Active",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: Colors.grey.shade600,
-                        ),
+                      // Load home doc to show image and limit
+                      StreamBuilder<DocumentSnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('Homes')
+                            .doc(widget.homeId)
+                            .snapshots(),
+                        builder: (context, homeSnap) {
+                          if (!homeSnap.hasData || !homeSnap.data!.exists) {
+                            return const SizedBox(); // or loading indicator
+                          }
+
+                          final homeData =
+                              homeSnap.data!.data() as Map<String, dynamic>?;
+
+                          final imageUrl =
+                              homeData?['imageUrl'] as String? ?? '';
+                          final dailyLimit =
+                              (homeData?['dailyUsageLimit'] as num?)
+                                  ?.toDouble();
+
+                          Widget avatar;
+                          if (imageUrl.isNotEmpty) {
+                            avatar = ClipRRect(
+                              borderRadius: BorderRadius.circular(80.r),
+                              child: Container(
+                                width: 80.w,
+                                height: 80.w,
+                                color: Colors.grey.shade200,
+                                child: Image.network(
+                                  imageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (c, e, s) => Container(
+                                    color: Colors.grey.shade100,
+                                    child: Icon(
+                                      widget.homeIcon,
+                                      color: widget.homeColor,
+                                      size: 40.sp,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          } else {
+                            avatar = Container(
+                              padding: EdgeInsets.all(20.w),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: widget.homeColor.withOpacity(0.3),
+                                    blurRadius: 20.r,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                widget.homeIcon,
+                                color: widget.homeColor,
+                                size: 48.sp,
+                              ),
+                            );
+                          }
+
+                          return Column(
+                            children: [
+                              Stack(
+                                children: [
+                                  avatar,
+                                  Positioned(
+                                    right: 0,
+                                    bottom: 0,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.15,
+                                            ),
+                                            blurRadius: 8,
+                                          ),
+                                        ],
+                                      ),
+                                      child: IconButton(
+                                        icon: Icon(
+                                          Icons.edit,
+                                          size: 18.sp,
+                                          color: widget.homeColor,
+                                        ),
+                                        onPressed: () => _editHomeImage(
+                                          widget.homeId,
+                                          imageUrl,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 12.h),
+                              Text(
+                                "${devices.length} Devices",
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(height: 8.h),
+                              FutureBuilder<double>(
+                                future: UsageCalculator()
+                                    .calculateDailyUsageForHome(widget.homeId),
+                                builder: (context, usageSnap) {
+                                  final currentUsage = usageSnap.data ?? 0.0;
+                                  if (dailyLimit != null && dailyLimit > 0) {
+                                    final over = currentUsage >= dailyLimit;
+                                    return Text(
+                                      over
+                                          ? "LIMIT EXCEEDED"
+                                          : "${currentUsage.toStringAsFixed(2)} / ${dailyLimit.toStringAsFixed(2)} kWh",
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: over
+                                            ? Colors.red.shade700
+                                            : Colors.grey.shade600,
+                                        fontWeight: over
+                                            ? FontWeight.bold
+                                            : FontWeight.w500,
+                                      ),
+                                    );
+                                  }
+                                  return Text(
+                                    "$activeCount Active",
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -263,7 +375,7 @@ class _HomeDevicesScreenState extends State<HomeDevicesScreen> {
                 Text(
                   deviceName,
                   textAlign: TextAlign.center,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 14.sp,
@@ -438,6 +550,93 @@ class _HomeDevicesScreenState extends State<HomeDevicesScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error toggling device: $e')));
+    }
+  }
+
+  Future<void> _editHomeImage(String homeId, String currentUrl) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await showModalBottomSheet<XFile?>(
+        context: context,
+        builder: (context) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Camera'),
+                onTap: () async {
+                  final file = await picker.pickImage(
+                    source: ImageSource.camera,
+                    maxWidth: 1800,
+                    maxHeight: 1800,
+                    imageQuality: 85,
+                  );
+                  Navigator.pop(context, file);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Gallery'),
+                onTap: () async {
+                  final file = await picker.pickImage(
+                    source: ImageSource.gallery,
+                    maxWidth: 1800,
+                    maxHeight: 1800,
+                    imageQuality: 85,
+                  );
+                  Navigator.pop(context, file);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.close),
+                title: const Text('Cancel'),
+                onTap: () => Navigator.pop(context, null),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (picked == null) return;
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (c) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final uploaded = await CloudneryUploader().uploadFile(picked);
+
+      Navigator.pop(context);
+
+      if (uploaded == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Image upload failed'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      await FirebaseFirestore.instance.collection('Homes').doc(homeId).update({
+        'imageUrl': uploaded,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Home image updated'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating image: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 }

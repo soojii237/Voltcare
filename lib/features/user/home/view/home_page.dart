@@ -7,6 +7,8 @@ import 'package:rxdart/rxdart.dart';
 import 'package:voltcare/features/user/home/view/newhomecreation_screen.dart';
 import 'package:voltcare/features/widgets/apptext.dart';
 import 'package:voltcare/utils/constants/app_colors.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:voltcare/service/cloudinary_service.dart';
 import 'package:voltcare/utils/helper/helper_icons.dart' show IconHelper;
 import 'package:voltcare/utils/helper/helper_pagenavigator.dart';
 import '../../../../utils/dynamic/appvariables.dart';
@@ -21,143 +23,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Homes/Locations data with their devices
-  List<Map<String, dynamic>> homes = [
-    {
-      "name": "My Home",
-      "icon": Icons.home,
-      "color": AppColors.iconBlue,
-      "devices": [
-        {
-          "name": "Living Room Bulb",
-          "category": "Bulb",
-          "isOn": false,
-          "icon": Icons.lightbulb,
-          "power": "60W",
-        },
-        {
-          "name": "Ceiling Fan",
-          "category": "Fan",
-          "isOn": true,
-          "icon": Icons.air,
-          "power": "75W",
-        },
-        {
-          "name": "AC",
-          "category": "AC",
-          "isOn": false,
-          "icon": Icons.ac_unit,
-          "power": "1500W",
-        },
-        {
-          "name": "Smart TV",
-          "category": "TV",
-          "isOn": true,
-          "icon": Icons.tv,
-          "power": "120W",
-        },
-      ],
-    },
-    {
-      "name": "My Rent House",
-      "icon": Icons.apartment,
-      "color": Colors.orange,
-      "devices": [
-        {
-          "name": "Bedroom Bulb",
-          "category": "Bulb",
-          "isOn": true,
-          "icon": Icons.lightbulb,
-          "power": "40W",
-        },
-        {
-          "name": "Table Fan",
-          "category": "Fan",
-          "isOn": false,
-          "icon": Icons.air,
-          "power": "50W",
-        },
-      ],
-    },
-    {
-      "name": "Office",
-      "icon": Icons.business,
-      "color": Colors.green,
-      "devices": [
-        {
-          "name": "Desk Lamp",
-          "category": "Bulb",
-          "isOn": false,
-          "icon": Icons.lightbulb,
-          "power": "25W",
-        },
-        {
-          "name": "AC Unit",
-          "category": "AC",
-          "isOn": false,
-          "icon": Icons.ac_unit,
-          "power": "2000W",
-        },
-        {
-          "name": "Computer",
-          "category": "Electronics",
-          "isOn": true,
-          "icon": Icons.computer,
-          "power": "300W",
-        },
-      ],
-    },
-  ];
 
-  // Usage history data
-  List<Map<String, dynamic>> usageHistory = [
-    {
-      "date": "Today",
-      "usage": "2.4 kWh",
-      "amount": "₹18.00",
-      "location": "My Home",
-    },
-    {
-      "date": "Yesterday",
-      "usage": "3.1 kWh",
-      "amount": "₹23.25",
-      "location": "My Home",
-    },
-    {
-      "date": "2 days ago",
-      "usage": "2.8 kWh",
-      "amount": "₹21.00",
-      "location": "My Rent House",
-    },
-    {
-      "date": "3 days ago",
-      "usage": "3.5 kWh",
-      "amount": "₹26.25",
-      "location": "My Home",
-    },
-    {
-      "date": "4 days ago",
-      "usage": "2.2 kWh",
-      "amount": "₹16.50",
-      "location": "Office",
-    },
-  ];
 
-  // Calculate total devices across all homes
-  int get totalDevices {
-    return homes.fold(0, (sum, home) => sum + (home['devices'] as List).length);
-  }
-
-  // Calculate active devices
-  int get activeDevices {
-    int count = 0;
-    for (var home in homes) {
-      for (var device in home['devices']) {
-        if (device['isOn']) count++;
-      }
-    }
-    return count;
-  }
+  
 
   UsageCalculator calculator = UsageCalculator();
   String weeklyUsage = "Loading...";
@@ -352,22 +220,45 @@ class _HomePageState extends State<HomePage> {
           padding: EdgeInsets.all(16.w),
           child: Row(
             children: [
-              // Home icon
-              Container(
-                padding: EdgeInsets.all(14.w),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      homeColor.withOpacity(0.3),
-                      homeColor.withOpacity(0.6),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              // Home image or icon
+              Builder(builder: (context) {
+                final data = home.data() as Map<String, dynamic>;
+                final imageUrl = (data['imageUrl'] as String?) ?? '';
+                if (imageUrl.isNotEmpty) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(16.r),
+                    child: Container(
+                      width: 64.w,
+                      height: 64.w,
+                      color: Colors.grey.shade200,
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (c, e, s) => Container(
+                          color: Colors.grey.shade100,
+                          child: Icon(homeIcon, color: homeColor, size: 28.sp),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                return Container(
+                  padding: EdgeInsets.all(14.w),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        homeColor.withOpacity(0.3),
+                        homeColor.withOpacity(0.6),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16.r),
                   ),
-                  borderRadius: BorderRadius.circular(16.r),
-                ),
-                child: Icon(homeIcon, color: homeColor, size: 32.sp),
-              ),
+                  child: Icon(homeIcon, color: homeColor, size: 32.sp),
+                );
+              }),
 
               SizedBox(width: 16.w),
 
@@ -454,6 +345,9 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
 
+              // Edit image
+
+
               // Delete icon
               IconButton(
                 icon: Icon(
@@ -537,9 +431,70 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _editHomeImage(String homeId, String currentUrl) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await showModalBottomSheet<XFile?>(
+        context: context,
+        builder: (context) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Camera'),
+                onTap: () async {
+                  final file = await picker.pickImage(source: ImageSource.camera, maxWidth: 1800, maxHeight: 1800, imageQuality: 85);
+                  Navigator.pop(context, file);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Gallery'),
+                onTap: () async {
+                  final file = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1800, maxHeight: 1800, imageQuality: 85);
+                  Navigator.pop(context, file);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.close),
+                title: const Text('Cancel'),
+                onTap: () => Navigator.pop(context, null),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (picked == null) return;
+
+      // show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (c) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final uploaded = await CloudneryUploader().uploadFile(picked);
+
+      Navigator.pop(context); // remove loading
+
+      if (uploaded == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image upload failed'), backgroundColor: Colors.red));
+        return;
+      }
+
+      await FirebaseFirestore.instance.collection('Homes').doc(homeId).update({'imageUrl': uploaded});
+
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Home image updated'), backgroundColor: Colors.green));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error updating image: $e'), backgroundColor: Colors.red));
+    }
+  }
+
   Future<int> getEquipmentsCount(String homeId) async {
     final snapshot = await FirebaseFirestore.instance
-        .collection('Home') // your main collection (replace if different)
+        .collection('Homes') // your main collection (replace if different)
         .doc(homeId)
         .collection('Equipments')
         .get();
@@ -813,98 +768,6 @@ class _HomePageState extends State<HomePage> {
           Text(
             label,
             style: TextStyle(fontSize: 10.sp, color: Colors.grey.shade600),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============ USAGE HISTORY CARD ============
-  Widget _buildUsageHistoryCard(int index) {
-    final history = usageHistory[index];
-
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10.r,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: AppColors.iconBlue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Icon(
-              Icons.calendar_today,
-              color: AppColors.iconBlue,
-              size: 24.sp,
-            ),
-          ),
-          SizedBox(width: 16.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  history["date"],
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  history["location"],
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.flash_on,
-                      size: 14.sp,
-                      color: Colors.grey.shade600,
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      history["usage"],
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                history["amount"],
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue.shade600,
-                ),
-              ),
-            ],
           ),
         ],
       ),
