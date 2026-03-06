@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../devidedetails/view/daily_graph.dart';
 import '../devidedetails/view/weekly_graph.dart';
 import '../devidedetails/view/monthly_graph.dart'; // Add this import
+import '../../../../utils/dynamic/appvariables.dart';
 
 class UsagePage extends StatefulWidget {
   const UsagePage({super.key});
@@ -16,10 +17,11 @@ class UsagePage extends StatefulWidget {
   State<UsagePage> createState() => _UsagePageState();
 }
 
-class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMixin {
+class _UsagePageState extends State<UsagePage>
+    with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late AnimationController _animationController;
-  
+
   bool _isLoading = true;
   Map<String, dynamic> _todayData = {};
   Map<String, dynamic> _weekData = {};
@@ -43,7 +45,6 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
   }
 
   Future<void> _loadUsageData() async {
-    
     try {
       await Future.wait([
         _calculateTodayUsage(),
@@ -65,42 +66,33 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
     DateTime now = DateTime.now();
     DateTime todayStart = DateTime(now.year, now.month, now.day, 0, 0, 0);
     DateTime todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
-    
+
     double totalKWh = await _calculateUsageForPeriod(todayStart, todayEnd);
-    
+
     if (mounted) {
-      _todayData = {
-        'kwh': totalKWh,
-        'cost': totalKWh * 7.50,
-      };
+      _todayData = {'kwh': totalKWh, 'cost': totalKWh * 7.50};
     }
   }
 
   Future<void> _calculateWeekUsage() async {
     DateTime now = DateTime.now();
     DateTime weekStart = now.subtract(Duration(days: 7));
-    
+
     double totalKWh = await _calculateUsageForPeriod(weekStart, now);
-    
+
     if (mounted) {
-      _weekData = {
-        'kwh': totalKWh,
-        'cost': totalKWh * 7.50,
-      };
+      _weekData = {'kwh': totalKWh, 'cost': totalKWh * 7.50};
     }
   }
 
   Future<void> _calculateMonthUsage() async {
     DateTime now = DateTime.now();
     DateTime monthStart = DateTime(now.year, now.month, 1);
-    
+
     double totalKWh = await _calculateUsageForPeriod(monthStart, now);
-    
+
     if (mounted) {
-      _monthData = {
-        'kwh': totalKWh,
-        'cost': totalKWh * 7.50,
-      };
+      _monthData = {'kwh': totalKWh, 'cost': totalKWh * 7.50};
     }
   }
 
@@ -109,7 +101,7 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
     int totalDurationSeconds = 0;
 
     try {
-      QuerySnapshot homesSnapshot = await _firestore.collection('Homes').get();
+      QuerySnapshot homesSnapshot = await _getUserHomes();
 
       for (var homeDoc in homesSnapshot.docs) {
         QuerySnapshot equipmentSnapshot = await _firestore
@@ -148,11 +140,11 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
     DateTime now = DateTime.now();
     DateTime todayStart = DateTime(now.year, now.month, now.day, 0, 0, 0);
     DateTime todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
-    
+
     List<Map<String, dynamic>> devices = [];
 
     try {
-      QuerySnapshot homesSnapshot = await _firestore.collection('Homes').get();
+      QuerySnapshot homesSnapshot = await _getUserHomes();
 
       for (var homeDoc in homesSnapshot.docs) {
         QuerySnapshot equipmentSnapshot = await _firestore
@@ -165,7 +157,7 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
           var equipmentData = equipmentDoc.data() as Map<String, dynamic>;
           String deviceName = equipmentData['name'] ?? 'Unknown Device';
           String deviceType = equipmentData['type'] ?? 'device';
-          
+
           double deviceWatts = 0.0;
           int deviceDuration = 0;
 
@@ -261,6 +253,33 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
     }
   }
 
+  Future<QuerySnapshot> _getUserHomes() async {
+    final user = Appvariables.loggedInUser;
+    if (user == null) {
+      return await _firestore
+          .collection('Homes')
+          .where('status', isEqualTo: 1)
+          .where('userId', isEqualTo: null)
+          .get();
+    }
+
+    if (user.memberType != null &&
+        user.homeId != null &&
+        user.homeId!.isNotEmpty) {
+      return await _firestore
+          .collection('Homes')
+          .where('status', isEqualTo: 1)
+          .where('homeId', isEqualTo: user.homeId)
+          .get();
+    }
+
+    return await _firestore
+        .collection('Homes')
+        .where('status', isEqualTo: 1)
+        .where('userId', isEqualTo: user.uid)
+        .get();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -302,7 +321,7 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
                   children: [
                     // Enhanced Header Card
                     _buildHeaderCard(),
-                    
+
                     // Summary Cards
                     Padding(
                       padding: EdgeInsets.all(16.w),
@@ -376,7 +395,9 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
                           _deviceUsage.isEmpty
                               ? _buildEmptyState()
                               : Column(
-                                  children: _deviceUsage.asMap().entries.map((entry) {
+                                  children: _deviceUsage.asMap().entries.map((
+                                    entry,
+                                  ) {
                                     int index = entry.key;
                                     var device = entry.value;
                                     return _modernDeviceTile(
@@ -417,7 +438,8 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => DailyDeviceGraphPage(),
+                                            builder: (context) =>
+                                                DailyDeviceGraphPage(),
                                           ),
                                         );
                                       },
@@ -433,7 +455,8 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => WeeklyDeviceGraphPage(),
+                                            builder: (context) =>
+                                                WeeklyDeviceGraphPage(),
                                           ),
                                         );
                                       },
@@ -451,7 +474,8 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => MonthlyDeviceGraphPage(),
+                                      builder: (context) =>
+                                          MonthlyDeviceGraphPage(),
                                     ),
                                   );
                                 },
@@ -473,7 +497,10 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
   Widget _buildHeaderCard() {
     double todayKwh = _todayData['kwh'] ?? 0.0;
     double todayCost = _todayData['cost'] ?? 0.0;
-    double percentage = (todayKwh / 10).clamp(0.0, 1.0); // Assume 10kWh daily limit
+    double percentage = (todayKwh / 10).clamp(
+      0.0,
+      1.0,
+    ); // Assume 10kWh daily limit
 
     return Container(
       width: double.infinity,
@@ -543,7 +570,10 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
                   ),
                   SizedBox(height: 8.h),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 6.h,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(20.r),
@@ -713,10 +743,7 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
       builder: (context, value, child) {
         return Transform.translate(
           offset: Offset(0, 20 * (1 - value)),
-          child: Opacity(
-            opacity: value,
-            child: child,
-          ),
+          child: Opacity(opacity: value, child: child),
         );
       },
       child: Container(
@@ -771,7 +798,10 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 6.h,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12.r),
@@ -886,14 +916,10 @@ class _UsagePageState extends State<UsagePage> with SingleTickerProviderStateMix
           Text(
             "Start using your devices to see\nusage statistics here",
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: Colors.grey.shade500,
-            ),
+            style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade500),
           ),
         ],
       ),
     );
   }
 }
-
